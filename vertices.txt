@@ -1,0 +1,15 @@
+# Vertices
+Nora: Niall, 5; Kinata, 10; Lustro, 20
+Niall: Nora, 5; Lustro, 10; Sean, 10; Michon, 10
+Lustro: Nora, 20; Niall, 10
+Kinata: Nora, 10; Michon, 5
+Sean: Niall, 10; Michon, 5
+Michon: Niall, 10; Sean, 5; Kinata, 5
+end.
+
+# Possible Meeting Points
+Nora
+Niall
+Sean
+Michon
+end.
