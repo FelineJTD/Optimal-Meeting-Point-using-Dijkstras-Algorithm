@@ -1,0 +1,6 @@
+# Vertices
+Atlanta: Boston, 100; Denver, 160
+Boston: Chicago, 120; Denver, 180
+Chicago: El Paso, 80
+Denver: Chicago, 40; El Paso, 140
+El Paso: Boston, 100

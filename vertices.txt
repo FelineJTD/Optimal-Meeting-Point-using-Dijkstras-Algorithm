@@ -5,11 +5,3 @@ Lustro: Nora, 20; Niall, 10
 Kinata: Nora, 10; Michon, 5
 Sean: Niall, 10; Michon, 5
 Michon: Niall, 10; Sean, 5; Kinata, 5
-end.
-
-# Possible Meeting Points
-Nora
-Niall
-Sean
-Michon
-end.
