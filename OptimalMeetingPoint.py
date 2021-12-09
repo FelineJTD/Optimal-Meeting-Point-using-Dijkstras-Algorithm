@@ -1,7 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Author : Felicia Sutandijo
+# @Date   : 2021-12-09
 
+'''
+This python code contains the functions needed to determine
+the optimal meeting point of a group of connected people
+represented by a weighted graph
+'''
 
 def readVertices(filename):
-  # a function that reads a file containing vertices data and returns
+  # a function that reads a file named filename (string) containing vertices data and returns
   # 1. vertices: dictionary of dictionary
   # 2. unreachables: array
   # 3. count: integer
@@ -10,16 +19,16 @@ def readVertices(filename):
   Accepted file format:
   
   # comments
-  node: adjacent node, weight; another adjacent node, weight
-  another node: adjacent node, weight
+  vertex: adjacent vertex, weight; another adjacent vertex, weight
+  another vertex: adjacent vertex, weight
 
   # spaces and newlines do not matter
-  # just remember not to put a semicolon (;) after the last adjacent node of each node
+  # just remember not to put a semicolon (;) after the last adjacent vertex of each vertex
   '''
 
   vertices = {} # a dictionary of all the vertices and their corresponding dictionary of edges
-  unreachables = [] # an array of unreachable nodes
-  count = 0 # count of nodes
+  unreachables = [] # an array of unreachable vertices
+  count = 0 # count of vertices
 
   # open file
   with open(filename, "r") as f:
@@ -35,7 +44,7 @@ def readVertices(filename):
       count += 1
       data[i] = data[i].split(":")
       name = data[i][0]
-      # initiate dictionary of edges using node name as key
+      # initiate dictionary of edges using vertex name as key
       vertices[name] = {}
       data[i][1] = data[i][1].split(";")
       # iteration to append edges data to dictionary
@@ -43,120 +52,137 @@ def readVertices(filename):
         data[i][1][j] = data[i][1][j].split(",")
         vertices[name][data[i][1][j][0]] = int(data[i][1][j][1])
   
-  # check if there are any nodes which are unreachable
-  for node in vertices.keys():
+  # check if there are any vertices which are unreachable
+  for vertex in vertices.keys():
     found = False
     for edges in vertices.values():
-      if node in edges:
+      if vertex in edges:
         found = True
         break
     if not found:
-      unreachables.append(node)    
+      unreachables.append(vertex)    
   
   return (vertices, unreachables, count)
     
 
-def completeDijkstra(vertices, start_city):
-  cheapest_prices = {}
-  previous_stopover_city = {}
-  unvisited_cities = []
-  rev_cities = []
-  visited_cities = {}
+def completeDijkstra(vertices, start_vertex):
+  # a function that requires a vertices (dictionary) and a start_vertex (string)
+  # and returns cheapest_costs (dictionary) and previous_stopover_vertex (dictionary)
+  # through complete Dijkstra method which calculates all cheapest routes
+  # to every city from every city (or vice versa, depending on the vertices data)
 
-  for i in vertices.keys():
-    visited_cities[i] = False
+  # variables to be returned
+  cheapest_costs = {}
+  previous_stopover_vertex = {}
+  # variables to hold temporary states while Dijkstra runs
+  unvisited_vertices = [] # a queue, to be used in initial loop
+  revisit_vertices = [] # a queue, containing the same elements with the same order, to be used in secondary loop
+  visited_vertices = {}
 
-  unvisited_cities.append(start_city)
-  rev_cities.append(start_city)
+  # enqueue
+  unvisited_vertices.append(start_vertex)
+  revisit_vertices.append(start_vertex)
 
   # initial loop
-  while (unvisited_cities!=[]):
+  while (unvisited_vertices != []):
     # initiation
-    curr_city = unvisited_cities[0]
-    cheapest_prices[curr_city] = {}
-    previous_stopover_city[curr_city] = {}
-    cheapest_prices[curr_city][curr_city] = 0
-    unvisited_cities.pop(0)
-    visited_cities[curr_city] = True
+    # dequeue
+    curr_vertex = unvisited_vertices[0]
+    unvisited_vertices.pop(0)
 
-    for adj_city, price in vertices[curr_city].items(): # iterate each adj cities
-      if (not visited_cities[adj_city]):
-        unvisited_cities.append(adj_city)
-        rev_cities.append(adj_city)
+    cheapest_costs[curr_vertex] = {}
+    previous_stopover_vertex[curr_vertex] = {}
+    cheapest_costs[curr_vertex][curr_vertex] = 0
+    visited_vertices[curr_vertex] = True
 
-      for vc, visited in visited_cities.items():
-        if visited:
-          try:
-            price_through_current_city = cheapest_prices[vc][curr_city] + price
-            try:
-              if(cheapest_prices[vc][adj_city] > price_through_current_city):
-                cheapest_prices[vc][adj_city] = price_through_current_city
-                previous_stopover_city[vc][adj_city] = curr_city
-            except:
-              cheapest_prices[vc][adj_city] = price_through_current_city
-              previous_stopover_city[vc][adj_city] = curr_city
-          except:
-            pass
-    
-  # revisiting cities
-  for p in range(len(rev_cities)):
-    curr_city = rev_cities[p]
-    for q in range(p+1,len(rev_cities)):
-      vc = rev_cities[q]
-      for adj_city, price in vertices[rev_cities[p]].items(): # iterate each adj cities
+    for adj_vertex, price in vertices[curr_vertex].items(): # iterate each adj vertices
+      # add vertex to queues if not yet visited
+      if (adj_vertex not in visited_vertices):
+        unvisited_vertices.append(adj_vertex)
+        revisit_vertices.append(adj_vertex)
+
+      for vv in visited_vertices.keys():
         try:
-          price_through_current_city = cheapest_prices[vc][curr_city] + price
+          # if there is a cheapest cost through curr_vertex
+          price_through_current_vertex = cheapest_costs[vv][curr_vertex] + price
           try:
-            if(cheapest_prices[vc][adj_city] > price_through_current_city):
-              cheapest_prices[vc][adj_city] = price_through_current_city
-              previous_stopover_city[vc][adj_city] = curr_city
+            # compare the prices if there is an existing one
+            if(cheapest_costs[vv][adj_vertex] > price_through_current_vertex):
+              cheapest_costs[vv][adj_vertex] = price_through_current_vertex
+              previous_stopover_vertex[vv][adj_vertex] = curr_vertex
           except:
-            cheapest_prices[vc][adj_city] = price_through_current_city
-            previous_stopover_city[vc][adj_city] = curr_city
+            # price not yet initialized
+            cheapest_costs[vv][adj_vertex] = price_through_current_vertex
+            previous_stopover_vertex[vv][adj_vertex] = curr_vertex
         except:
           pass
-  
-  return(cheapest_prices, previous_stopover_city)
+    
+  # revisiting vertices
+  # this secondary loop is important so that all vertices 'visits' all vertices, currently only the start_vertex has done so
+  for p in range(len(revisit_vertices)):
+    curr_vertex = revisit_vertices[p]
+    for q in range(p+1,len(revisit_vertices)):
+      vv = revisit_vertices[q]
+      for adj_vertex, price in vertices[revisit_vertices[p]].items(): # iterate each adj vertices
+        try:
+          price_through_current_vertex = cheapest_costs[vv][curr_vertex] + price
+          try:
+            if(cheapest_costs[vv][adj_vertex] > price_through_current_vertex):
+              cheapest_costs[vv][adj_vertex] = price_through_current_vertex
+              previous_stopover_vertex[vv][adj_vertex] = curr_vertex
+          except:
+            cheapest_costs[vv][adj_vertex] = price_through_current_vertex
+            previous_stopover_vertex[vv][adj_vertex] = curr_vertex
+        except:
+          pass
+
+  return(cheapest_costs, previous_stopover_vertex)
 
 
-def printRoutes(vertices, previous_stopover_node, destination):
+def printRoutes(vertices, previous_stopover_vertex, destination):
+  # a procedure to output all routes
+  # from each vertex to the destination
   print("Here are everybody's routes:")
-  for start_city in vertices.keys():
-    curr_city = destination
+  for start_vertex in vertices.keys():
+    curr_vertex = start_vertex
     cheapest_route = []
-    while (curr_city != start_city):
-      cheapest_route.append(curr_city)
-      curr_city = previous_stopover_node[start_city][curr_city]
-    cheapest_route.append(start_city)
-    cheapest_route.reverse()
+    while (curr_vertex != destination):
+      cheapest_route.append(curr_vertex)
+      curr_vertex = previous_stopover_vertex[destination][curr_vertex]
+    cheapest_route.append(destination)
+    print("•", end=" ")
     for i in range(len(cheapest_route)-1):
       print(f"{cheapest_route[i]} -> ", end="")
     print(cheapest_route[len(cheapest_route)-1])
 
 
-def minTotalCost(cheapest_costs, previous_stopover_node, node_count):
+def minTotalCost(cheapest_costs, vertex_count):
+  # a function that accepts cheapest_costs (dictionary) and vertex_count (integer)
+  # and returns the suitable meeting point place (string) and minimum TOTAL COST min (integer) spent accumulatively by everyone
   min = -1
-  for node, costs_from_other_nodes in cheapest_costs.items(): # these are the possible meeting points
+  for vertex, costs_from_other_vertices in cheapest_costs.items(): # these are the possible meeting points
     total_cost = 0
-    # check if everyone could reach the node
-    if (len(costs_from_other_nodes) == node_count):
-      for i in costs_from_other_nodes.values():
+    # check if everyone could reach the vertex
+    if (len(costs_from_other_vertices) == vertex_count):
+      for i in costs_from_other_vertices.values():
         total_cost += i
       if (min == -1 or total_cost < min):
         min = total_cost
-        place = node
+        place = vertex
 
   return (place, min)
 
 
-def minMaxCost(cheapest_costs, previous_stopover_node, node_count):
+def minMaxCost(cheapest_costs, vertex_count):
+  # a function that accepts cheapest_costs (dictionary) and vertex_count (integer)
+  # and returns the suitable meeting point place (string) and minimum MAXIMUM COST min (integer) spent by an individual
   min = -1
-  for node, costs_from_other_nodes in cheapest_costs.items(): # these are the possible meeting points
-    # check if everyone could reach the node
-    if (len(costs_from_other_nodes) == node_count):
-      cost = max(costs_from_other_nodes.values())
+  for vertex, costs_from_other_vertices in cheapest_costs.items(): # these are the possible meeting points
+    # check if everyone could reach the vertex
+    if (len(costs_from_other_vertices) == vertex_count):
+      cost = max(costs_from_other_vertices.values())
       if (min == -1 or cost < min):
         min = cost
-        place = node
+        place = vertex
   
   return (place, min)

@@ -1,1 +1,1 @@
-# Optimal-Meeting-Point-using-Dijkstra-Algorithm
+# Finding Optimal Meeting Point using Modified Dijkstra Algorithm
