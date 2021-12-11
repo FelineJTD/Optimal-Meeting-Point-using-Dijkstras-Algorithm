@@ -8,6 +8,7 @@ This python code contains the functions needed to determine
 the optimal meeting point of a group of connected people
 represented by a weighted graph
 '''
+from PriorityQueue import PriorityQueue
 
 def readVertices(filename):
   # a function that reads a file named filename (string) containing vertices data and returns
@@ -75,20 +76,19 @@ def completeDijkstra(vertices, start_vertex):
   cheapest_costs = {}
   previous_stopover_vertex = {}
   # variables to hold temporary states while Dijkstra runs
-  unvisited_vertices = [] # a queue, to be used in initial loop
+  unvisited_vertices = PriorityQueue() # a priority queue, to be used in initial loop
   revisit_vertices = [] # a queue, containing the same elements with the same order, to be used in secondary loop
   visited_vertices = {}
 
   # enqueue
-  unvisited_vertices.append(start_vertex)
-  revisit_vertices.append(start_vertex)
+  unvisited_vertices.insert(start_vertex)
 
   # initial loop
-  while (unvisited_vertices != []):
+  while (not unvisited_vertices.isEmpty()):
     # initiation
     # dequeue
-    curr_vertex = unvisited_vertices[0]
-    unvisited_vertices.pop(0)
+    curr_vertex = unvisited_vertices.delete()
+    revisit_vertices.append(curr_vertex)
 
     cheapest_costs[curr_vertex] = {}
     previous_stopover_vertex[curr_vertex] = {}
@@ -98,8 +98,7 @@ def completeDijkstra(vertices, start_vertex):
     for adj_vertex, price in vertices[curr_vertex].items(): # iterate each adj vertices
       # add vertex to queues if not yet visited
       if (adj_vertex not in visited_vertices):
-        unvisited_vertices.append(adj_vertex)
-        revisit_vertices.append(adj_vertex)
+        unvisited_vertices.insert(adj_vertex)
 
       for vv in visited_vertices.keys():
         try:

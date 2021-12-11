@@ -1,0 +1,188 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Author : Felicia Sutandijo
+# @Date   : 2021-12-09
+
+'''
+This python code contains the functions needed to determine
+the optimal meeting point of a group of connected people
+represented by a weighted graph
+'''
+
+DEFINE FUNCTION readVertices(filename):
+  # a function that reads a file named filename (string) containing vertices data and RETURNs
+  # 1. vertices: dictionary of dictionary
+  # 2. unreachables: array
+  # 3. count: integer
+
+  '''
+  Accepted file format:
+  
+  # comments
+  vertex: adjacent vertex, weight; another adjacent vertex, weight
+  another vertex: adjacent vertex, weight
+
+  # spaces and newlines do not matter
+  # just remember not to put a semicolon (;) after the last adjacent vertex of each vertex
+  '''
+
+  SET vertices TO {} # a dictionary of all the vertices and their corresponding dictionary of edges
+  SET unreachables TO [] # an array of unreachable vertices
+  SET count TO 0 # count of vertices
+
+  # open file
+  with open(filename, "r") as f:
+    SET data TO f.read()
+
+  # clean file
+  SET data TO data.replace(" ", "")
+  SET data TO data.split("\n")
+  
+  # iteration
+  FOR i IN range(len(data)):
+    IF (data[i] != "" and data[i][0] != "#"): # aka IF the line contains data
+      count += 1
+      SET data[i] TO data[i].split(":")
+      SET name TO data[i][0]
+      # initiate dictionary of edges using vertex name as key
+      SET vertices[name] TO {}
+      SET data[i][1] TO data[i][1].split(";")
+      # iteration to append edges data to dictionary
+      FOR j IN range (len(data[i][1])):
+        SET data[i][1][j] TO data[i][1][j].split(",")
+        SET vertices[name][data[i][1][j][0]] TO int(data[i][1][j][1])
+  
+  # check IF there are any vertices which are unreachable
+  FOR vertex IN vertices.keys():
+    SET found TO False
+    FOR edges IN vertices.values():
+      IF vertex IN edges:
+        SET found TO True
+        break
+    IF not found:
+      unreachables.append(vertex)    
+  
+  RETURN (vertices, unreachables, count)
+    
+
+DEFINE FUNCTION completeDijkstra(vertices, start_vertex):
+  # a function that requires a vertices (dictionary) and a start_vertex (string)
+  # and RETURNs cheapest_costs (dictionary) and previous_stopover_vertex (dictionary)
+  # through complete Dijkstra method which calculates all cheapest routes
+  # to every city from every city (or vice versa, depending on the vertices data)
+
+  # variables to be RETURNed
+  SET cheapest_costs TO {}
+  SET previous_stopover_vertex TO {}
+  # variables to hold temporary states WHILE Dijkstra runs
+  SET unvisited_vertices TO [] # a queue, to be used IN initial loop
+  SET revisit_vertices TO [] # a queue, containing the same elements with the same order, to be used IN secondary loop
+  SET visited_vertices TO {}
+
+  # enqueue
+  unvisited_vertices.append(start_vertex)
+  revisit_vertices.append(start_vertex)
+
+  # initial loop
+  WHILE (unvisited_vertices != []):
+    # initiation
+    # dequeue
+    SET curr_vertex TO unvisited_vertices[0]
+    unvisited_vertices.pop(0)
+
+    SET cheapest_costs[curr_vertex] TO {}
+    SET previous_stopover_vertex[curr_vertex] TO {}
+    SET cheapest_costs[curr_vertex][curr_vertex] TO 0
+    SET visited_vertices[curr_vertex] TO True
+
+    FOR adj_vertex, price IN vertices[curr_vertex].items(): # iterate each adj vertices
+      # add vertex to queues IF not yet visited
+      IF (adj_vertex not IN visited_vertices):
+        unvisited_vertices.append(adj_vertex)
+        revisit_vertices.append(adj_vertex)
+
+      FOR vv IN visited_vertices.keys():
+        TRY:
+          # IF there is a cheapest cost through curr_vertex
+          SET price_through_current_vertex TO cheapest_costs[vv][curr_vertex] + price
+          TRY:
+            # compare the prices IF there is an existing one
+            if(cheapest_costs[vv][adj_vertex] > price_through_current_vertex):
+              SET cheapest_costs[vv][adj_vertex] TO price_through_current_vertex
+              SET previous_stopover_vertex[vv][adj_vertex] TO curr_vertex
+          EXCEPT:
+            # price not yet initialized
+            SET cheapest_costs[vv][adj_vertex] TO price_through_current_vertex
+            SET previous_stopover_vertex[vv][adj_vertex] TO curr_vertex
+        EXCEPT:
+          PASS
+    
+  # revisiting vertices
+  # this secondary loop is important so that all vertices 'visits' all vertices, currently only the start_vertex has done so
+  FOR p IN range(len(revisit_vertices)):
+    SET curr_vertex TO revisit_vertices[p]
+    FOR q IN range(p+1,len(revisit_vertices)):
+      SET vv TO revisit_vertices[q]
+      FOR adj_vertex, price IN vertices[revisit_vertices[p]].items(): # iterate each adj vertices
+        TRY:
+          SET price_through_current_vertex TO cheapest_costs[vv][curr_vertex] + price
+          TRY:
+            if(cheapest_costs[vv][adj_vertex] > price_through_current_vertex):
+              SET cheapest_costs[vv][adj_vertex] TO price_through_current_vertex
+              SET previous_stopover_vertex[vv][adj_vertex] TO curr_vertex
+          EXCEPT:
+            SET cheapest_costs[vv][adj_vertex] TO price_through_current_vertex
+            SET previous_stopover_vertex[vv][adj_vertex] TO curr_vertex
+        EXCEPT:
+          PASS
+
+  RETURN(cheapest_costs, previous_stopover_vertex)
+
+
+DEFINE FUNCTION OUTPUTRoutes(vertices, previous_stopover_vertex, destination):
+  # a procedure to output all routes
+  # from each vertex to the destination
+  OUTPUT("Here are everybody's routes:")
+  FOR start_vertex IN vertices.keys():
+    SET curr_vertex TO start_vertex
+    SET cheapest_route TO []
+    WHILE (curr_vertex != destination):
+      cheapest_route.append(curr_vertex)
+      SET curr_vertex TO previous_stopover_vertex[destination][curr_vertex]
+    cheapest_route.append(destination)
+    OUTPUT("•", end=" ")
+    FOR i IN range(len(cheapest_route)-1):
+      OUTPUT(f"{cheapest_route[i]} -> ", end="")
+    OUTPUT(cheapest_route[len(cheapest_route)-1])
+
+
+DEFINE FUNCTION minTotalCost(cheapest_costs, vertex_count):
+  # a function that accepts cheapest_costs (dictionary) and vertex_count (integer)
+  # and RETURNs the suitable meeting point place (string) and minimum TOTAL COST min (integer) spent accumulatively by everyone
+  SET min TO -1
+  FOR vertex, costs_from_other_vertices IN cheapest_costs.items(): # these are the possible meeting points
+    SET total_cost TO 0
+    # check IF everyone could reach the vertex
+    IF (len(costs_from_other_vertices) EQUALS vertex_count):
+      FOR i IN costs_from_other_vertices.values():
+        total_cost += i
+      IF (min EQUALS -1 or total_cost < min):
+        SET min TO total_cost
+        SET place TO vertex
+
+  RETURN (place, min)
+
+
+DEFINE FUNCTION minMaxCost(cheapest_costs, vertex_count):
+  # a function that accepts cheapest_costs (dictionary) and vertex_count (integer)
+  # and RETURNs the suitable meeting point place (string) and minimum MAXIMUM COST min (integer) spent by an individual
+  SET min TO -1
+  FOR vertex, costs_from_other_vertices IN cheapest_costs.items(): # these are the possible meeting points
+    # check IF everyone could reach the vertex
+    IF (len(costs_from_other_vertices) EQUALS vertex_count):
+      SET cost TO max(costs_from_other_vertices.values())
+      IF (min EQUALS -1 or cost < min):
+        SET min TO cost
+        SET place TO vertex
+  
+  RETURN (place, min)
