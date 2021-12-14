@@ -1,0 +1,5 @@
+Atlanta: Boston, 200
+Boston: Atlanta, 190; Chicago, 90
+Chicago: Atlanta, 250; Boston, 80; El Paso, 120
+Denver: Boston, 150; Chicago, 40; El Paso, 130
+El Paso: Denver, 120

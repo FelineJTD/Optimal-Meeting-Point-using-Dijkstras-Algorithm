@@ -7,7 +7,7 @@
 This python code determines the optimal meeting point of a group of connected people represented by a weighted graph
 '''
 
-from OptimalMeetingPoint import printRoutes, readVertices, completeDijkstra, minTotalCost, minMaxCost, printRoutes
+from OptimalMeetingPoint import printRoutes, readVertices, modifiedDijkstra, minTotalCost, minMaxCost, printRoutes
 import sys
 
 file_name = sys.argv[1]
@@ -22,7 +22,7 @@ else:
   else: # no constraints, everyone can travel
     # use the first vertex as a starting point
     start_vertex = next(iter(vertices))
-  cheapest, prev_vertex = completeDijkstra(vertices, start_vertex)
+  cheapest, prev_vertex = modifiedDijkstra(vertices, start_vertex)
 
   # minimizing cost method
   try:

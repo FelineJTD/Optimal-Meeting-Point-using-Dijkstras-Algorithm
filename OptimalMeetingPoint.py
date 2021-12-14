@@ -49,9 +49,10 @@ def readVertices(filename):
       vertices[name] = {}
       data[i][1] = data[i][1].split(";")
       # iteration to append edges data to dictionary
-      for j in range (len(data[i][1])):
-        data[i][1][j] = data[i][1][j].split(",")
-        vertices[name][data[i][1][j][0]] = int(data[i][1][j][1])
+      if data[i][1] != [""]:
+        for j in range (len(data[i][1])):
+          data[i][1][j] = data[i][1][j].split(",")
+          vertices[name][data[i][1][j][0]] = int(data[i][1][j][1])
   
   # check if there are any vertices which are unreachable
   for vertex in vertices.keys():
@@ -66,10 +67,10 @@ def readVertices(filename):
   return (vertices, unreachables, count)
     
 
-def completeDijkstra(vertices, start_vertex):
+def modifiedDijkstra(vertices, start_vertex):
   # a function that requires a vertices (dictionary) and a start_vertex (string)
   # and returns cheapest_costs (dictionary) and previous_stopover_vertex (dictionary)
-  # through complete Dijkstra method which calculates all cheapest routes
+  # through modified Dijkstra's algorithm which calculates all cheapest routes
   # to every city from every city (or vice versa, depending on the vertices data)
 
   # variables to be returned
